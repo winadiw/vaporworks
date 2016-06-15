@@ -1,4 +1,6 @@
-Repository ini dibuat hanya untuk TUGAS PERKULIAHAN
+Project:Tank
+
+Repository ini dibuat hanya untuk TUGAS PERKULIAHAN mata kuliah Rekayasa Piranti Lunak
 
 Pihak terlibat:
 Winadi Wiratama 	 / 00000007257
