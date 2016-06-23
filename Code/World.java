@@ -9,12 +9,16 @@ import javax.swing.JFrame;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.Graphics2D;
 
 public class World extends JFrame implements Runnable
 {
     Target target;
     Tank tank;
     Tank tank2;
+    Bullet bullet;
     private double incT;
     private Thread animator;
     BufferedImage dbImage;
@@ -24,34 +28,38 @@ public class World extends JFrame implements Runnable
     
     private int canvasHeight;
     private int canvasStartY;
-    
+    private double v0Bullet;			// the initial velocity of the bullet
+    private double incV0;			// the increment of initial velocity
+    private double currentT;			// the time of the game 
+    private int scale;
     public World()
     {
         setExtendedState(MAXIMIZED_BOTH);
-		setBackground(Color.WHITE);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setVisible(true);				
-		setFocusable(true);
+	setBackground(Color.WHITE);
+	setDefaultCloseOperation(EXIT_ON_CLOSE);
+	setVisible(true);				
+	setFocusable(true);
         
-		canvasHeight = getHeight() - getInsets().top;
-		canvasStartY = getInsets().top;
-		dbImage = (BufferedImage)createImage(getWidth(), canvasHeight);
+	canvasHeight = getHeight() - getInsets().top;
+	canvasStartY = getInsets().top;
+	dbImage = (BufferedImage)createImage(getWidth(), canvasHeight);
         incT = 0.01;
-        
+        v0Bullet = 1200;
+
         //Initialize Target
-        target = new Target(getWidth()/2, 100, 20, 50, 5, Color.RED);
+        target = new Target(getWidth()*3/4, 100, 20, 50, 5, Color.RED);
         
         //target = new target();
         
         //Initialize Bullet
         
-        //tank = new Tank(getWidth()-200, 700);
-        tank2 = new Tank(200, 700);
+        tank = new Tank(200, 700);
+        //tank2 = new Tank(200, 700);
         try
         {
-        	tankImage = ImageIO.read(new File("C:/Users/ASUS N550JV/Desktop/Tank/TankTanpaLaras.png"));
-        	tankImageKanan = ImageIO.read(new File("C:/Users/ASUS N550JV/Desktop/Tank/TankTanpaLaras_Kanan.png"));
-        	barrelKanan = ImageIO.read(new File("C:/Users/ASUS N550JV/Desktop/Tank/Laras_Kanan.png"));
+        	tankImage = ImageIO.read(new File("D:/imagetank/Tank_Kanan.png"));
+        	//tankImageKanan = ImageIO.read(new File("image/TankTanpaLaras.png"));
+        	barrelKanan = ImageIO.read(new File("D:/imagetank/Laras_Kanan.png"));
         }
         catch(IOException e)
         {
@@ -68,6 +76,7 @@ public class World extends JFrame implements Runnable
 		{
                     //Naikkan Target
 			target.moveUp();
+
 		}
 		else if(e.getKeyCode() == KeyEvent.VK_DOWN)
 		{
@@ -78,6 +87,26 @@ public class World extends JFrame implements Runnable
                 {
                     //Keluar dari permainan, kembali ke menu dengan muncul dialog
                 }
+                
+                else if(e.getKeyCode() == KeyEvent.VK_W)
+                {
+                    tank.barrelUp();
+                }
+                
+                else if(e.getKeyCode() == KeyEvent.VK_S)
+                {
+                    tank.barrelDown();
+                }
+                
+                else if(e.getKeyCode() == KeyEvent.VK_D)
+                {
+                    //bullet.shoot();
+                    bullet = new Bullet(tank.getBarrelEndX(), 
+                    tank.getBarrelEndY(),
+                    v0Bullet, currentT, tank.getAlpha(), 10, 100);	
+                    //System.out.println(tank.getBarrelEndX()+" "+tank.getBarrelEndY());
+                    System.out.println(tank.getAlpha());
+                }   
             }
             @Override
             public void keyReleased(KeyEvent arg0) 
@@ -119,23 +148,45 @@ public class World extends JFrame implements Runnable
     
     public void update()
     {
-        //Update mechanics disini semua
+        currentT += incT;
+        if(bullet != null)			
+        {
+           bullet.move(currentT);  
+        }
     }
     
     public void render()
     {
         //Gambar graphics nanti disini
     	Graphics g = dbImage.getGraphics();
+        Graphics2D g2d = (Graphics2D)g;
     	
-    	g.setColor(new Color(0,0,0));
-		g.fillRect(0, 0, getWidth(), canvasHeight);
+    	g.setColor(Color.white);
+	g.fillRect(0, 0, getWidth(), canvasHeight);
     	
- 		target.draw(g, this.getHeight()/2, this.getWidth()/2, 1);
- 		
- 		//tank.draw(g, this.tankImage);
- 		tank2.drawBarrel(g, this.barrelKanan);
- 		tank2.draw(g, this.tankImageKanan);
- 		//g.drawImage(this.tankImage, tank.getX(), tank.getY(), 680/4, 270/4, null);
+ 	target.draw(g, this.getHeight(), this.getWidth(), 1);
+ 	tank.draw(g, this.tankImage);
+             
+        AffineTransform at = new AffineTransform();
+        
+        // 4. translate it to the center of the component
+        //at.translate(this.getWidth() / 2, this.getHeight() / 2);
+        at.setToTranslation(tank.getX()+160, tank.getY()+24);
+        
+        at.rotate(tank.getAlpha());
+        at.scale(0.4, 0.4);
+
+        // 1. translate the object so that you rotate it around the axis
+        //at.translate(barrelKanan.getWidth(), barrelKanan.getHeight());
+
+        // draw the image
+        tank.drawBarrel2D(g2d, this.barrelKanan, at);
+        //tank2.draw(g, this.tankImageKanan);
+        if(bullet != null)
+        {
+            bullet.draw(g, 0, 0);
+        }
+		
    }
     
     public void printScreen()
